@@ -1,0 +1,6 @@
+data/SimSIN/01.png
+data/SimSIN/02.png
+data/SimSIN/03.png
+data/VA/01.png
+data/VA/02.png
+data/VA/03.png
