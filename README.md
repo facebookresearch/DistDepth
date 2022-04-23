@@ -48,7 +48,7 @@ Download pretrained models
 
 ## <div align=""> Data</div>
 
-Download SimSIN [<a href="https://drive.google.com/file/d/1P93270GM_gbx3Cc-b5lLdHOr9P9ZWyLO/view?usp=sharing">here</a>]. For UniSIN and VA, please download at the [<a href="https://distdepth.github.io/">project site</a>]
+Download SimSIN [<a href="https://drive.google.com/file/d/1P93270GM_gbx3Cc-b5lLdHOr9P9ZWyLO/view?usp=sharing">here</a>]. For UniSIN and VA, please download at the [<a href="https://distdepth.github.io/">project site</a>].
 
 ## <div align="">Depth-aware AR effects</div>
 
@@ -56,7 +56,7 @@ Virtual object insertion:
 
 <img src='fig/AR-eff.png'>
 
-Draggin objects along a trajectory:
+Dragging objects along a trajectory:
 
 <img src='fig/move.gif'>
 
