@@ -2,7 +2,7 @@
 
 <a href="https://choyingw.github.io/">Cho-Ying Wu</a>, <a href="https://sites.google.com/view/jialiangwang/home">Jialiang Wang</a>, <a href="https://www.linkedin.com/in/michaelanthonyhall/">Michael Hall</a>, <a href="https://cgit.usc.edu/contact/ulrich-neumann/">Ulrich Neumann</a>, <a href="https://shuochsu.github.io/">Shuochen Su</a>
 
-[<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://distdepth.github.io/">project site</a>]
+[<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://distdepth.github.io/">project site: data, supplementary</a>]
 
 <img src='fig/teaser.png'>
 
