@@ -4,10 +4,11 @@
 
 [<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://distdepth.github.io/">project site: data, supplementary</a>]
 
+Advantage
 <img src='fig/teaser.png'>
 
+Results
 <img src='fig/results_pc_1.png'>
-
 <img src='fig/results_pc_2.png'>
 
 ### DistDepth
@@ -48,15 +49,21 @@ Download pretrained models
 
 7. Results will be stored under `results/`
 
-## <div align="">Pointcloud generation</div>
+## <div align="">Pointcloud Generation</div>
 
-Sample data are provided in `data/sample_pc`. Run
+Some Sample data are provided in `data/sample_pc`.
 
-    ``` python visualize_pc.py ```
+   ``` python visualize_pc.py ```
+
 
 ## <div align=""> Data</div>
 
 Download SimSIN [<a href="https://drive.google.com/file/d/1P93270GM_gbx3Cc-b5lLdHOr9P9ZWyLO/view?usp=sharing">here</a>]. For UniSIN and VA, please download at the [<a href="https://distdepth.github.io/">project site</a>].
+
+To generate stereo data with depth using Habitat, we provide a snippet here. Install <a href="https://github.com/facebookresearch/habitat-sim">Habitat</a> first.  
+
+   ``` python visualize_pc.py ```
+
 
 ## <div align="">Depth-aware AR effects</div>
 
