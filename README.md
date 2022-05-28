@@ -6,7 +6,9 @@
 
 <img src='fig/teaser.png'>
 
-<img src='fig/results_pcs.png'>
+<img src='fig/results_pc_1.png'>
+
+<img src='fig/results_pc_2.png'>
 
 ### DistDepth
 Our DistDepth is a highly robust monocular depth estimation approach for generic indoor scenes.
@@ -45,6 +47,12 @@ Download pretrained models
    ``` python demo.py ```
 
 7. Results will be stored under `results/`
+
+## <div align="">Pointcloud generation</div>
+
+Sample data are provided in `data/sample_pc`. Run
+
+    ``` python visualize_pc.py ```
 
 ## <div align=""> Data</div>
 
