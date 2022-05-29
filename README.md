@@ -127,8 +127,6 @@ Change train_filenames (dummy) and val_filenames in execute_func.py to NYUv2. Th
 python execute.py --exe eval_measure --log_dir='./tmp' --data_path NYUv2 --dataset NYUv2  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 12 --frame_ids 0 --num_layers 152
 ```
 
-## <div align=""> Visualization</div>
-
 ## <div align="">Depth-aware AR effects</div>
 
 Virtual object insertion:

@@ -190,8 +190,5 @@ class VABase(data.Dataset):
     def get_color(self, folder, frame_index, side, do_flip):
         raise NotImplementedError
 
-    def check_depth(self):
-        raise NotImplementedError
-
     def get_depth(self, folder, frame_index, side, do_flip):
         raise NotImplementedError
