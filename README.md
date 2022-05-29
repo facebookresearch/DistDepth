@@ -69,9 +69,10 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 SimSIN trained models, evaluation on VA
 
 | Name | Arch | Expert | MAE | AbsRel | RMSE | acc@ 1.25 | acc@ 1.25^2 | acc@ 1.25^3 | Download |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DistDepth | ResNet152 | DPT Large | 0.252 | 0.175 | 0.371 | 75.1 | 93.9 | 98.4 | [model](https://drive.google.com/file/d/1X_VMg1LYLmm8xCloLRjqHtIslyXfOrn5/view?usp=sharing) |
 | DistDepth | ResNet152 | DPT Legacy | 0.270 | 0.186 | 0.386 | 73.2 | 93.2 | 97.9 | [model](https://drive.google.com/file/d/1rTBSglo_h-Ke5HMe4xvHhCjpeBDRl6vx/view?usp=sharing) |
+
 
 Download VA (8G) first. Extract under the root folder.
 
@@ -88,9 +89,7 @@ Download VA (8G) first. Extract under the root folder.
                ......
          ├── VA_left_all.txt
 
-   ``` bash eval.sh ```
-
-The performances will be saved under the root folder.
+Run   ``` bash eval.sh ```   The performances will be saved under the root folder.
 
 To visualize the predicted depth maps, 
 
