@@ -9,13 +9,11 @@ from __future__ import absolute_import, division, print_function
 import os
 import random
 import numpy as np
-import copy
-from PIL import Image  # using pillow-simd for increased speed
+from PIL import Image
 
 import torch
 import torch.utils.data as data
 from torchvision import transforms
-import augly.image as imaugs
 
 
 def pil_loader(path):

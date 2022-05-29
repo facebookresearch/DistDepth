@@ -6,12 +6,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import imageio
 import json
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import numpy as np
 import os
 import time
@@ -23,14 +19,11 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 torch.backends.cudnn.benchmark = True
 
-
 from utils import *
 from layers import *
 import datasets
 import networks
 from dpt_networks.dpt_depth import DPTDepthModel
-
-SCALE_FAC = 1.0#1.31202#1.2#2#1.2 #2#1.31202 #1.2#2#1.2 #2 720/256 #* 0.82 #1.19912341237#1.0 #2 #1.19912341237 * (720/256) #*0.82 #* 1.19912341237
 
 class Trainer:
     def __init__(self, options):
@@ -49,7 +42,8 @@ class Trainer:
 
         assert self.opt.frame_ids[0] == 0, "frame_ids must start with 0"
 
-        self.use_pose_net = not (self.opt.use_stereo and self.opt.frame_ids == [0])
+        self.use_pose_net = False
+        #self.use_pose_net = not (self.opt.use_stereo and self.opt.frame_ids == [0])
 
         if self.opt.use_stereo:
             self.opt.frame_ids.append("s")
@@ -156,19 +150,16 @@ class Trainer:
         self.save_opts()
 
     def set_train(self):
-        """Convert all models to training mode
-        """
         for m in self.models.values():
             m.train()
 
     def set_eval(self):
-        """Convert all models to testing/evaluation mode
-        """
         for m in self.models.values():
             m.eval()
 
     def eval_save(self):
-        """Validate the model on a single minibatch
+        """
+        save prediction for a minibatch
         """
         self.set_eval()
         try:
@@ -205,8 +196,57 @@ class Trainer:
 
             del inputs, outputs, losses
 
+    def eval_save_all(self):
+        """
+        save prediction for all data on the list
+        """
+        self.set_eval()
+        self.count = 0
+        while True:
+            try:
+                inputs = self.val_iter.next()
+            except StopIteration:
+                break
+
+            with torch.no_grad():
+                inputs[("color_aug", 0, 0)] = inputs[("color_aug", 0, 0)].cuda()
+                features = self.models["encoder"](inputs[("color_aug", 0, 0)]) #
+                outputs = self.models["depth"](features)
+                depth = output_to_depth(outputs[('out', 0)], self.opt.min_depth, self.opt.max_depth)
+                outputs[("depth", 0, 0)] = depth
+                sz = (640,640)
+                store_path = f'results_all/'
+                if not os.path.exists(store_path):
+                    os.makedirs(store_path)
+                    os.makedirs(store_path+'/depth')
+
+                img = inputs[('color',0, 0)]
+                img = F.interpolate(img, sz, mode='bilinear', align_corners=True)
+                img = img.cpu().numpy().squeeze().transpose(0,2,3,1)
+
+                if 'depth_gt' in inputs:
+                    depth_gt = inputs['depth_gt']
+                    depth_gt = F.interpolate(depth_gt, sz, mode='bilinear', align_corners=True)
+                    depth_gt = depth_gt.cpu().numpy().squeeze()
+                    mask = depth_gt > 0 
+
+                depth = outputs[('depth', 0, 0)] * self.approx_alignment #approximate alignment for visualization
+                depth = F.interpolate(depth, sz, mode='bilinear', align_corners=True)
+                depth = depth.cpu().numpy().squeeze()
+
+                batch_size = img.shape[0]
+                for idx in range(batch_size):
+                    imageio.imwrite(f'{store_path}/{self.count:04d}_img.png', img[idx])
+                    write_turbo_depth_metric(f'{store_path}/depth/{self.count:04d}_depth.png', depth, vmax=10.0)
+                    self.count += 1
+                    if 'depth_gt' in inputs:
+                        write_turbo_depth_metric(f'{store_path}/depth/{self.count:04}_depth_gt.png', depth_gt, vmax=10.0)
+
+            del inputs, outputs
+
     def eval_measure(self):
-        """Validate the model on a single minibatch
+        """
+        eval on either VA or NYUv2
         """
         self.set_eval()
         self.abs_mn = AverageMeter('abs_mean')
@@ -239,7 +279,12 @@ class Trainer:
                 depth = output_to_depth(outputs[('out', 0)], self.opt.min_depth, self.opt.max_depth)
                 outputs[("depth", 0, 0)] = depth
                 if "depth_gt" in inputs:
-                    self.compute_depth_errors_VA(inputs, outputs, losses)
+                    if self.opt.dataset == 'VA':
+                        self.compute_depth_errors_VA(inputs, outputs, losses)
+                    elif self.opt.dataset == 'NYUv2':
+                        self.compute_depth_errors_NYUv2(inputs, outputs, losses)
+                    else:
+                        raise NotImplementedError("Do evaluation only on VA or NYUv2")
                     self.abs_mn.update(losses['de/abs_mn'], N)
                     self.abs_rel.update(losses['de/abs_rel'], N)
                     self.sq_rel.update(losses['de/sq_rel'], N)
@@ -261,10 +306,8 @@ class Trainer:
         f.close()
 
     def compute_depth_errors_VA(self, inputs, outputs, losses):
-        """Compute depth metrics, to allow monitoring during training
-
-        This isn't particularly accurate as it averages over the entire batch,
-        so is only used to give an indication of validation performance
+        """
+        compute depth errors on VA
         """
         depth_pred = outputs[("depth", 0, 0)]
         depth_pred = F.interpolate(depth_pred, [640, 640], mode="bilinear", align_corners=True)
@@ -286,8 +329,28 @@ class Trainer:
         for i, metric in enumerate(self.depth_metric_names):
             losses[metric] = np.array(depth_errors[i].cpu())
 
+    def compute_depth_errors_NYUv2(self, inputs, outputs, losses):
+        """
+        compute depth errors on NYUv2
+        """
+        depth_pred = outputs[("depth", 0, 0)]
+        depth_pred = F.interpolate(depth_pred, [448, 608], mode="bilinear", align_corners=True)
+        depth_pred = depth_pred.detach()
+
+        depth_gt = inputs["depth_gt"]
+
+        depth_pred *= torch.median(depth_gt) / torch.median(depth_pred)
+        depth_pred = torch.clamp(depth_pred, min=1e-3, max=10.0)
+        depth_errors = compute_depth_errors(depth_gt, depth_pred)
+
+        if losses is None:
+            losses = {}
+        for i, metric in enumerate(self.depth_metric_names):
+            losses[metric] = np.array(depth_errors[i].cpu())
+
     def log_time(self, batch_idx, duration, loss):
-        """Print a logging statement to the terminal
+        """
+        print a logging statement to the terminal
         """
         samples_per_sec = self.opt.batch_size / duration
         time_sofar = time.time() - self.start_time
@@ -299,7 +362,8 @@ class Trainer:
                                   sec_to_hm_str(time_sofar), sec_to_hm_str(training_time_left)))
 
     def log(self, mode, inputs, outputs, losses):
-        """Write an event to the tensorboard events file
+        """
+        write an event to the tensorboard events file
         """
         writer = self.writers[mode]
         for l, v in losses.items():
@@ -326,14 +390,16 @@ class Trainer:
                         outputs["identity_selection/{}".format(s)][j][None, ...], self.step)
     
     def log_losses(self, mode, losses):
-        """Write an event to the tensorboard events file
+        """
+        write an event to the tensorboard events file
         """
         writer = self.writers[mode]
         for l, v in losses.items():
             writer.add_scalar("{}".format(l), v, self.step)
 
     def save_opts(self):
-        """Save options to disk so we know what we ran this experiment with
+        """
+        save options to disk so we know what we ran this experiment with
         """
         models_dir = os.path.join(self.log_path, "models")
         if not os.path.exists(models_dir):
@@ -344,7 +410,8 @@ class Trainer:
             json.dump(to_save, f, indent=2)
 
     def save_model(self):
-        """Save model weights to disk
+        """
+        save model weights to disk
         """
         save_folder = os.path.join(self.log_path, "models", "weights_{}".format(self.epoch))
         if not os.path.exists(save_folder):
@@ -361,7 +428,8 @@ class Trainer:
             torch.save(to_save, save_path)
 
     def load_model(self):
-        """Load model(s) from disk
+        """
+        load model(s) from disk
         """
         self.opt.load_weights_folder = os.path.expanduser(self.opt.load_weights_folder)
 

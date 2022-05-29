@@ -9,21 +9,16 @@ from __future__ import absolute_import, division, print_function
 import os
 import random
 import numpy as np
-import copy
 from PIL import Image
 
 import torch
 import torch.utils.data as data
 from torchvision import transforms
-import torch.nn.functional as F
-import augly.image as imaugs
-
 
 def pil_loader(path):
     with open(path, 'rb') as f:
         with Image.open(f) as img:
             return img.convert('RGB')
-
 
 class SimSINBase(data.Dataset):
     def __init__(self,
@@ -196,9 +191,6 @@ class SimSINBase(data.Dataset):
         return inputs
 
     def get_color(self, folder, frame_index, side, do_flip):
-        raise NotImplementedError
-
-    def check_depth(self):
         raise NotImplementedError
 
     def get_depth(self, folder, frame_index, side, do_flip):

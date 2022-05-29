@@ -9,15 +9,11 @@ from __future__ import absolute_import, division, print_function
 import os
 import random
 import numpy as np
-import copy
 from PIL import Image
 
 import torch
 import torch.utils.data as data
 from torchvision import transforms
-
-import augly.image as imaugs
-
 
 def pil_loader(path):
     with open(path, 'rb') as f:
@@ -70,8 +66,6 @@ class NYUv2Base(data.Dataset):
             s = 2 ** i
             self.resize[i] = transforms.Resize((self.height // s, self.width // s),
                                                interpolation=self.interp)
-
-        self.load_depth = self.check_depth()
 
         self.mapping = {'l':'0', 'r':'1'}
         self.rev_mapping = {'l':'1', 'r':'0'}
@@ -128,32 +122,16 @@ class NYUv2Base(data.Dataset):
 
         do_color_aug = self.is_train and random.random() > 0.5
         do_flip = self.is_train and random.random() > 0.5
-        do_encoding = self.is_train and random.random() > 0.5
 
         line = self.filenames[index].split()
         folder = line[0]
 
-        if len(line) == 3:
-            frame_index = int(line[1])
-        else:
-            frame_index = 0
-
-        if len(line) == 3:
-            side = line[2]
-        else:
-            side = None
-
         for i in self.frame_idxs:
-            if i == "s":
-                path =  os.path.join(self.data_path, folder[:-1]+self.rev_mapping[side]+'.jpg')
+            if i == 0:
+                path =  os.path.join(self.data_path, folder + '.png')
                 inputs[("color", i, -1)] = self.get_color(path, do_flip)
             else:
-                if not self.is_train:
-                    path =  os.path.join(self.data_path, folder+'.jpg')
-                else:
-                    folder_idx = folder.rsplit('/',1)[0]
-                    path =  os.path.join(self.data_path, folder_idx +'/'+ str(frame_index+1*i) + '.jpg')
-                inputs[("color", i, -1)] = self.get_color(path, do_flip)
+                raise NotImplementedError("NYUv2 only supports current frame")
 
         # adjusting intrinsics to match each scale in the pyramid
         for scale in range(self.num_scales):
@@ -178,7 +156,6 @@ class NYUv2Base(data.Dataset):
         else:
             color_aug = (lambda x: x)
 
-        
         self.preprocess(inputs, color_aug)
 
         for i in self.frame_idxs:
@@ -187,25 +164,15 @@ class NYUv2Base(data.Dataset):
 
         #if it's not training (testing time), load the gt depth for calculating the error
         if not self.is_train:
-            path =  os.path.join(self.data_path, folder+'.png')
+            gt_folder = f'{folder}.npy'.replace('img','depth')
+            path =  os.path.join(self.data_path, gt_folder)
             depth_gt = self.get_depth(path, do_flip)
             inputs["depth_gt"] = np.expand_dims(depth_gt, 0)
             inputs["depth_gt"] = torch.from_numpy(inputs["depth_gt"].astype(np.float32))
 
-        if "s" in self.frame_idxs:
-            stereo_T = np.eye(4, dtype=np.float32)
-            baseline_sign = -1 if do_flip else 1
-            side_sign = -1 if side == "l" else 1
-            stereo_T[0, 3] = side_sign * baseline_sign * 0.1
-
-            inputs["stereo_T"] = torch.from_numpy(stereo_T)
-
         return inputs
 
     def get_color(self, folder, frame_index, side, do_flip):
-        raise NotImplementedError
-
-    def check_depth(self):
         raise NotImplementedError
 
     def get_depth(self, folder, frame_index, side, do_flip):

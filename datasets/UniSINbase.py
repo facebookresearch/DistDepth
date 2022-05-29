@@ -9,14 +9,11 @@ from __future__ import absolute_import, division, print_function
 import os
 import random
 import numpy as np
-import copy
 from PIL import Image
 
 import torch
 import torch.utils.data as data
 from torchvision import transforms
-
-import augly.image as imaugs
 
 
 def pil_loader(path):
@@ -70,8 +67,6 @@ class UniSINBase(data.Dataset):
             s = 2 ** i
             self.resize[i] = transforms.Resize((self.height // s, self.width // s),
                                                interpolation=self.interp)
-
-        self.load_depth = self.check_depth()
 
         self.mapping = {'l':'0', 'r':'1'}
         self.rev_mapping = {'l':'1', 'r':'0'}
@@ -193,9 +188,6 @@ class UniSINBase(data.Dataset):
         return inputs
 
     def get_color(self, folder, frame_index, side, do_flip):
-        raise NotImplementedError
-
-    def check_depth(self):
         raise NotImplementedError
 
     def get_depth(self, folder, frame_index, side, do_flip):

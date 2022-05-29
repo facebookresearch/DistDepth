@@ -4,12 +4,11 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-
 import cv2
 import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
+import os
 import torch
 from networks.depth_decoder import DepthDecoder
 from networks.resnet_encoder import ResnetEncoder

@@ -31,17 +31,15 @@ Install packages
 
 2. Install pre-requisite common packages. Go to https://pytorch.org/get-started/locally/ and install pytorch that is compatible to your computer. We test on pytorch v1.9.0 and cudatoolkit-11.1. (The codes should work under other v1.0+ versions)
 
-    ```conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=11.3 -c pytorch -c conda-forge ```
-
 3. Install other dependencies: opencv-python and matplotlib, imageio, Pillow, augly, tensorboardX
 
    ``` pip install opencv-python, matplotlib, imageio, Pillow, augly, tensorboardX ```
 
 Download pretrained models
 
-4. Download pretrained models [<a href="https://drive.google.com/file/d/1N3UAeSR5sa7KcMJAeKU961KUNBZ6vIgi/view?usp=sharing">here</a>] (ResNet152, 246MB).
+4. Download pretrained models [<a href="https://drive.google.com/file/d/1N3UAeSR5sa7KcMJAeKU961KUNBZ6vIgi/view?usp=sharing">here</a>] (ResNet152, 246MB, illustation for averagely good in-the-wild indoor scenes).
 
-5. Move the downloaded item under this folder, and then unzip it. You should be able to see a new folder 'ckpts' that contains the pretrained models.
+5. Unzip under the root. 'ckpts' that contains the pretrained models is created.
 
 6. Run
 
@@ -87,15 +85,50 @@ Download VA (8G) first. Extract under the root folder.
             ├── gt_depth_rectify
                ├── cam0_frame0000.depth.pfm 
                ......
-         ├── VA_left_all.txt
+            ├── VA_left_all.txt
 
 Run   ``` bash eval.sh ```   The performances will be saved under the root folder.
 
-To visualize the predicted depth maps, 
+To visualize the predicted depth maps in a minibatch: 
 
 ```shell
 python execute.py --exe eval_save --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152 ```
 ```
+
+To visualize the predicted depth maps for all testing data on the list: 
+
+```shell
+python execute.py --exe eval_save_all --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152 ```
+```
+
+Evaluation on NYUv2
+
+Prepare <a href="https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html">NYUv2</a> data.
+
+      .
+      ├── NYUv2
+            ├── img_val
+               ├── 00001.png
+               ......
+            ├── depth_val
+               ├── 00001.npy
+               ......
+               ......
+            ├── NYUv2.txt
+
+| Name | Arch | Expert | MAE | AbsRel | RMSE | acc@ 1.25 | acc@ 1.25^2 | acc@ 1.25^3 | Download |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DistDepth-finetuned | ResNet152 | DPT on NYUv2 | 0.308 | 0.113 | 0.444 | 87.3 | 97.3 | 99.3 | [model](https://drive.google.com/file/d/1kLJBuMOf0xSpYq7DtxnPpBTxMwW0ylGm/view?usp=sharing) |
+| DistDepth-SimSIN | ResNet152 | DPT | 0.411 | 0.163 | 0.563 | 78.0 | 93.6 | 98.1 | [model](https://drive.google.com/file/d/1Hf_WPaBGMpPBFymCwmN8Xh1blXXZU1cd/view?usp=sharing) |
+
+Change train_filenames (dummy) and val_filenames in execute_func.py to NYUv2. Then,
+
+```shell
+python execute.py --exe eval_measure --log_dir='./tmp' --data_path NYUv2 --dataset NYUv2  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 12 --frame_ids 0 --num_layers 152
+```
+
+## <div align=""> Visualization</div>
+
 ## <div align="">Depth-aware AR effects</div>
 
 Virtual object insertion:

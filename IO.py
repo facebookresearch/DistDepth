@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import imageio
 import os
 import re
 import numpy as np
@@ -12,7 +13,7 @@ from scipy import misc
 import numpy as np
 from PIL import Image
 import sys
-import imageio
+
 
 def read(file):
     if file.endswith('.float3'): return readFloat(file)

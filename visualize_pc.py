@@ -4,13 +4,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import argparse
-import glob
-import h5py
 import numpy as np
 import os
 from PIL import Image
-import sys
 
 # # SimSIN camera parameters
 # focalLength = 256

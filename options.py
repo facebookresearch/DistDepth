@@ -11,7 +11,6 @@ import argparse
 
 file_dir = os.path.dirname(__file__)
 
-
 class DistDepthOptions:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description="DistDepth options")
@@ -56,14 +55,6 @@ class DistDepthOptions:
                                  type=int,
                                  help="input image width",
                                  default=256)
-        self.parser.add_argument("--disparity_smoothness",
-                                 type=float,
-                                 help="disparity smoothness weight",
-                                 default=1e-3)
-        self.parser.add_argument("--dist_wt",
-                                 type=float,
-                                 help="distillation loss weight",
-                                 default=1.0)
         self.parser.add_argument("--scales",
                                  nargs="+",
                                  type=int,

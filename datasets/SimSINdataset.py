@@ -28,9 +28,6 @@ class SimSINDataset(SimSINBase):
 
         self.full_res_shape = (512, 512)
 
-    def check_depth(self):
-        return True
-
     def get_color(self, path, do_flip):
         color = self.loader(path)
         if do_flip:

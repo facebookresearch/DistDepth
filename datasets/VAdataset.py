@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 
 import cv2
-import h5py
 import numpy as np
 import os
 import PIL.Image as pil
-import skimage.transform
 
 from .VAbase import VABase
 
@@ -38,7 +36,6 @@ class VADataset(VABase):
 
         if do_flip:
             color = color.transpose(pil.FLIP_LEFT_RIGHT)
-
         return color
 
     def get_depth(self, path, do_flip):
@@ -47,5 +44,4 @@ class VADataset(VABase):
         depth_gt = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
         if do_flip:
             depth_gt = np.fliplr(depth_gt)
-
         return depth_gt
