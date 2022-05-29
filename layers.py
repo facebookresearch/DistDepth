@@ -187,9 +187,9 @@ class Project3D(nn.Module):
         return pix_coords
 
 
-def upsample(x):
+def upsample(x, mode='nearest'):
     """Upsample input tensor by a factor of 2"""
-    return F.interpolate(x, scale_factor=2, mode="nearest")
+    return F.interpolate(x, scale_factor=2, mode=mode)
 
 
 def get_smooth_loss(disp, img):
@@ -252,6 +252,8 @@ def compute_depth_errors(gt, pred):
     a2 = (thresh < 1.25 ** 2).float().mean()
     a3 = (thresh < 1.25 ** 3).float().mean()
 
+    abs_mn = torch.abs(gt-pred).mean()
+
     rmse = (gt - pred) ** 2
     rmse = torch.sqrt(rmse.mean())
 
@@ -262,4 +264,4 @@ def compute_depth_errors(gt, pred):
 
     sq_rel = torch.mean((gt - pred) ** 2 / gt)
 
-    return abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3
+    return abs_mn, abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3

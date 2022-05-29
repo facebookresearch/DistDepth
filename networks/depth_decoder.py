@@ -22,7 +22,7 @@ class DepthDecoder(nn.Module):
 
         self.num_output_channels = num_output_channels
         self.use_skips = use_skips
-        self.upsample_mode = "nearest"
+        self.upsample_mode = "bilinear"
         self.scales = scales
 
         self.num_ch_enc = num_ch_enc
@@ -58,7 +58,7 @@ class DepthDecoder(nn.Module):
         x = input_features[-1]
         for i in range(4, -1, -1):
             x = self.convs[("upconv", i, 0)](x)
-            x = [upsample(x)]
+            x = [upsample(x, mode=self.upsample_mode)]
             if self.use_skips and i > 0:
                 x += [input_features[i - 1]]
             x = torch.cat(x, 1)

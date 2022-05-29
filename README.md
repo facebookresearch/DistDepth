@@ -33,9 +33,9 @@ Install packages
 
     ```conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=11.3 -c pytorch -c conda-forge ```
 
-3. Install other dependencies: opencv-python and matplotlib.
+3. Install other dependencies: opencv-python and matplotlib, imageio, Pillow, augly, tensorboardX
 
-   ``` pip install opencv-python, matplotlib ```
+   ``` pip install opencv-python, matplotlib, imageio, Pillow, augly, tensorboardX ```
 
 Download pretrained models
 
@@ -64,6 +64,36 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 
    ``` python visualize_pc.py ```
 
+## <div align=""> Evaluation</div>
+### SimSIN trained models, evaluation on VA
+
+| Name | Arch | Expert | MAE | AbsRel | RMSE | acc@ 1.25 | acc@ 1.25^2 | acc@ 1.25^3 | Download |
+|:---:|:---:|:---:|:---:|:---:| :---:|:---:|:---:|:---:|
+| DistDepth | ResNet152  | DPT Large | 0.252 | 0.175 | 0.371 | 75.1 | 93.9 | 98.4 | [model](https://drive.google.com/file/d/1X_VMg1LYLmm8xCloLRjqHtIslyXfOrn5/view?usp=sharing) |
+| DistDepth | ResNet152  | DPT Legacy | 0.270 | 0.186 | 0.386 | 73.2 | 93.2 | 97.9 | [model](https://drive.google.com/file/d/1rTBSglo_h-Ke5HMe4xvHhCjpeBDRl6vx/view?usp=sharing) |
+
+Download VA (8G) first. Extract under the root folder.
+
+DistDepth
+  |--VA
+      |--camera_0
+         |--00000000.png
+         .......
+      |--camera_1
+         |--00000000.png
+         ......
+      |--gt_depth_rectify
+         |--cam0_frame0000.depth.pfm
+         ......
+   |--VA_left_all.txt
+
+   ``` bash eval.sh ```
+
+The performances will be saved under the root folder.
+
+To visualize the predicted depth maps, 
+
+   ``` python execute.py --exe eval_save --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152 ```
 
 ## <div align="">Depth-aware AR effects</div>
 

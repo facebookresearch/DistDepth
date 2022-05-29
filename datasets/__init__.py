@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from .resnet_encoder import ResnetEncoder
-from .depth_decoder import DepthDecoder
-from .pose_decoder import PoseDecoder
+from .VAdataset import VADataset
+from .SimSINdataset import SimSINDataset
+from .NYUv2dataset import NYUv2Dataset
+from .UniSINdataset import UniSINDataset
