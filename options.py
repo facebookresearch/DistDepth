@@ -20,7 +20,7 @@ class DistDepthOptions:
                                  type=str,
                                  help="execution option",
                                  default="eval_save",
-                                 choices=["train", "eval_save", "eval_save_all", "eval_measure"])
+                                 choices=["train", "eval_save", "eval_save_all", "eval_measure", "eval_measure-M"])
 
         # PATHS
         self.parser.add_argument("--data_path",
@@ -128,6 +128,26 @@ class DistDepthOptions:
                                  type=int,
                                  help="number of epochs between each save",
                                  default=1)
+        
+        # Multi options
+        self.parser.add_argument('--use_future_frame',
+                                 action='store_true',
+                                 help='If set, will also use a future frame in time for matching.')
+        self.parser.add_argument('--num_matching_frames',
+                                 help='Sets how many previous frames to load to build the cost'
+                                      'volume',
+                                 type=int,
+                                 default=1)
+        self.parser.add_argument("--depth_binning",
+                                 help="defines how the depth bins are constructed for the cost"
+                                      "volume. 'linear' is uniformly sampled in depth space,"
+                                      "'inverse' is uniformly sampled in inverse depth space",
+                                 type=str,
+                                 choices=['linear', 'inverse'],
+                                 default='linear'),
+        self.parser.add_argument("--num_depth_bins",
+                                 type=int,
+                                 default=96)
 
     def parse(self):
         self.options = self.parser.parse_args()

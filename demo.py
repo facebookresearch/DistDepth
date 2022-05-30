@@ -20,7 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == "__main__":
 
     dir_prefix = "./"
-    file_list = open(dir_prefix + "file_list.txt", "r")
+    file_list = open(dir_prefix + "demo_list.txt", "r")
     files = file_list.readlines()
     output_path = dir_prefix + "results"
 

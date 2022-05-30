@@ -70,6 +70,7 @@ SimSIN trained models, evaluation on VA
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DistDepth | ResNet152 | DPT Large | 0.252 | 0.175 | 0.371 | 75.1 | 93.9 | 98.4 | [model](https://drive.google.com/file/d/1X_VMg1LYLmm8xCloLRjqHtIslyXfOrn5/view?usp=sharing) |
 | DistDepth | ResNet152 | DPT Legacy | 0.270 | 0.186 | 0.386 | 73.2 | 93.2 | 97.9 | [model](https://drive.google.com/file/d/1rTBSglo_h-Ke5HMe4xvHhCjpeBDRl6vx/view?usp=sharing) |
+| DistDepth-Multi| ResNet101 | DPT Legacy | 0.243 | 0.169 | 0.362 | 77.1 | 93.7 | 97.9 | [model](https://drive.google.com/file/d/16vIFEdlacp_cdQ7KWZE1zh6-Onzb3Pwn/view?usp=sharing) |
 
 
 Download VA (8G) first. Extract under the root folder.

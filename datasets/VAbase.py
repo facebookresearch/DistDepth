@@ -142,7 +142,8 @@ class VABase(data.Dataset):
                 path =  os.path.join(self.data_path, folder.replace(f'_{self.mapping[side]}', f'_{self.rev_mapping[side]}') + '.png')
                 inputs[("color", i, -1)] = self.get_color(path, do_flip)
             else:
-                path =  os.path.join(self.data_path, folder[:-8]+ '{0:08d}'.format(frame_index+1*i) + '.png')
+                path =  os.path.join(self.data_path, folder+'.png')
+                #path =  os.path.join(self.data_path, folder[:-8]+ '{0:08d}'.format(frame_index+1*i) + '.png')
                 inputs[("color", i, -1)] = self.get_color(path, do_flip)
 
         # adjusting intrinsics to match each scale in the pyramid

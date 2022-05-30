@@ -29,6 +29,7 @@ class VADataset(VABase):
         self.full_res_shape = (640, 640)
 
     def get_color(self, path, do_flip):
+        
         color = self.loader(path)
 
         if do_flip:
