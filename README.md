@@ -62,6 +62,16 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 
    ``` python visualize_pc.py ```
 
+## <div align=""> Training</div>
+
+For a simple taste of training, download a smaller replica set [<a href="https://drive.google.com/file/d/1g-OXOsKeincRc1-O3x42wVRFKpog2aRe/view?usp=sharing">here</a>] and create and put under './SimSIN-simple'.
+
+   ``` mkdir weights ```
+   ``` wget -O weights/dpt_hybrid_nyu-2ce69ec7.pt https://github.com/intel-isl/DPT/releases/download/1_0/dpt_hybrid_nyu-2ce69ec7.pt ```
+   ``` python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --use_stereo  --thre 0.95 --num_layers 152 ```
+
+The memory takes about 18G and requires about 20 min on a RTX 3090 GPU.
+
 ## <div align=""> Evaluation</div>
 
 SimSIN trained models, evaluation on VA
@@ -79,13 +89,13 @@ Download VA (8G) first. Extract under the root folder.
       ├── VA
             ├── camera_0
                ├── 00000000.png 
-               ......
+                   ......
             ├── camera_1
                ├── 00000000.png 
-               ......
+                   ......
             ├── gt_depth_rectify
                ├── cam0_frame0000.depth.pfm 
-               ......
+                   ......
             ├── VA_left_all.txt
 
 Run   ``` bash eval.sh ```   The performances will be saved under the root folder.

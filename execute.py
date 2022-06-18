@@ -15,6 +15,9 @@ opts = options.parse()
 
 if __name__ == "__main__":
     
+    if opts.exe == 'train':
+        trainer = Trainer(opts)
+        trainer.train()
     if opts.exe == 'eval_save':
         trainer = Trainer(opts)
         trainer.eval_save()

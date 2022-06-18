@@ -64,7 +64,7 @@ def sec_to_hm(t):
     t //= 60
     m = t % 60
     t //= 60
-    return t, m, 
+    return t, m, s
 
 def sec_to_hm_str(t):
     h, m, s = sec_to_hm(t)

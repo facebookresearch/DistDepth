@@ -36,7 +36,7 @@ class DistDepthOptions:
         self.parser.add_argument("--model_name",
                                  type=str,
                                  help="the name of the folder to save the model in",
-                                 default="temporary")
+                                 default="distdepth")
         self.parser.add_argument("--num_layers",
                                  type=int,
                                  help="number of ResNet layers",
@@ -45,7 +45,7 @@ class DistDepthOptions:
         self.parser.add_argument("--dataset",
                                  type=str,
                                  help="dataset option",
-                                 default="habitat",
+                                 default="SimSIN",
                                  choices=["VA", "SimSIN", "UniSIN", "NYUv2"])
         self.parser.add_argument("--height",
                                  type=int,
@@ -60,6 +60,10 @@ class DistDepthOptions:
                                  type=int,
                                  help="scales used in the loss",
                                  default=[0, 1, 2, 3])
+        self.parser.add_argument("--thre",
+                                 type=float,
+                                 help="threshold for edge map",
+                                 default=0.95)  
         self.parser.add_argument("--min_depth",
                                  type=float,
                                  help="minimum depth",
@@ -71,6 +75,14 @@ class DistDepthOptions:
         self.parser.add_argument("--use_stereo",
                                  help="if set, uses stereo pair for training",
                                  action="store_true")
+        self.parser.add_argument("--disparity_smoothness",
+                                 type=float,
+                                 help="disparity smoothness weight",
+                                 default=1e-3)
+        self.parser.add_argument("--dist_wt",
+                                 type=float,
+                                 help="distillation loss weight",
+                                 default=1.0)
         self.parser.add_argument("--frame_ids",
                                  nargs="+",
                                  type=int,
