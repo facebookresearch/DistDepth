@@ -2,7 +2,9 @@
 
 <a href="https://choyingw.github.io/">Cho-Ying Wu</a>, <a href="https://sites.google.com/view/jialiangwang/home">Jialiang Wang</a>, <a href="https://www.linkedin.com/in/michaelanthonyhall/">Michael Hall</a>, <a href="https://cgit.usc.edu/contact/ulrich-neumann/">Ulrich Neumann</a>, <a href="https://shuochsu.github.io/">Shuochen Su</a>
 
-[<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://distdepth.github.io/">project site: data, supplementary</a>]
+[<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://openaccess.thecvf.com/content/CVPR2022/html/Wu_Toward_Practical_Monocular_Indoor_Depth_Estimation_CVPR_2022_paper.html">CVF open access</a>] [<a href="https://distdepth.github.io/">project site: data, supplementary</a>]
+
+As this project includes data contribution, please refer to the project page for data download instructions, including SimSIN, UniSIN, and VA, as well as UniSIN leaderboard participation.
 
 Advantage
 <img src='fig/teaser.png'>
@@ -86,7 +88,7 @@ SimSIN trained models, evaluation on VA
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DistDepth | ResNet152 | DPT Large | 0.252 | 0.175 | 0.371 | 75.1 | 93.9 | 98.4 | [model](https://drive.google.com/file/d/1X_VMg1LYLmm8xCloLRjqHtIslyXfOrn5/view?usp=sharing) |
 | DistDepth | ResNet152 | DPT Legacy | 0.270 | 0.186 | 0.386 | 73.2 | 93.2 | 97.9 | [model](https://drive.google.com/file/d/1rTBSglo_h-Ke5HMe4xvHhCjpeBDRl6vx/view?usp=sharing) |
-| DistDepth-Multi| ResNet101 | DPT Legacy | 0.243 | 0.169 | 0.362 | 77.1 | 93.7 | 97.9 | [model](https://drive.google.com/file/d/16vIFEdlacp_cdQ7KWZE1zh6-Onzb3Pwn/view?usp=sharing) |
+| DistDepth-Multi| ResNet101 | DPT Legacy | 0.243 | 0.169 | 0.362 | 77.1 | 93.7 | 97.9 | [model](https://drive.google.com/file/d/1Sg_dXAyKI2VfKzHiAu9i8WqT9I7Y9k0D/view?usp=sharing) |
 
 
 Download VA (8G) first. Extract under the root folder.
