@@ -61,24 +61,24 @@ class Trainer:
         self.parameters_to_train += list(self.models["depth"].parameters())
 
         # Download pretrained weights from DPT (https://github.com/isl-org/DPT) and put them under './weights/'  
-        # self.mono_model = DPTDepthModel(
-        #     path='./weights/dpt_hybrid-midas-501f0c75.pt',
-        #     #path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
-        #     #path='./weights/dpt_large-midas-2f21e586.pt',
-        #     backbone="vitb_rn50_384", #DPT-hybrid
-        #     #backbone="vitl16_384", # DPT-Large
-        #     non_negative=True,
-        # )
-
-        # use NYU-finetuned weights
-        self.mono_model = DPTDepthModel2(
-            path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
-            scale=0.000305,
-            shift=0.1378,
-            invert=True,
-            backbone="vitb_rn50_384",
+        self.mono_model = DPTDepthModel(
+            path='./weights/dpt_hybrid-midas-501f0c75.pt',
+            #path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
+            #path='./weights/dpt_large-midas-2f21e586.pt',
+            backbone="vitb_rn50_384", #DPT-hybrid
+            #backbone="vitl16_384", # DPT-Large
             non_negative=True,
         )
+
+        # use NYU-finetuned weights, note that this model's output is in depth space, so no need to invert again in L252
+        # self.mono_model = DPTDepthModel2(
+        #     path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
+        #     scale=0.000305,
+        #     shift=0.1378,
+        #     invert=True,
+        #     backbone="vitb_rn50_384",
+        #     non_negative=True,
+        # )
         self.mono_model.requires_grad=False
         self.mono_model.to(self.device)
 
