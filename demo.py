@@ -82,4 +82,4 @@ if __name__ == "__main__":
                 np.uint8
             )
 
-            cv2.imwrite(os.path.join(output_path, f"{idx:02d}.png"), colormapped_im)
+            cv2.imwrite(os.path.join(output_path, f"{idx:02d}.png"), colormapped_im[:,:,[2,1,0]])
