@@ -76,7 +76,7 @@ if __name__ == "__main__":
             metric_depth = depth.cpu().numpy().squeeze()
 
             normalizer = mpl.colors.Normalize(vmin=0.1, vmax=5.0)
-            mapper = cm.ScalarMappable(norm=normalizer, cmap="viridis_r")
+            mapper = cm.ScalarMappable(norm=normalizer, cmap="turbo")
             colormapped_im = (mapper.to_rgba(metric_depth)[:, :, :3] * 255).astype(
                 np.uint8
             )

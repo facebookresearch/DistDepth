@@ -41,7 +41,7 @@ Download pretrained models
 
 4. Download pretrained models [<a href="https://drive.google.com/file/d/1N3UAeSR5sa7KcMJAeKU961KUNBZ6vIgi/view?usp=sharing">here</a>] (ResNet152, 246MB, illustation for averagely good in-the-wild indoor scenes).
 
-5. Unzip under the root. 'ckpts' that contains the pretrained models is created.
+5. Unzip the model under the root directory. 'ckpts' containing the pretrained models is then created.
 
 6. Run
 
