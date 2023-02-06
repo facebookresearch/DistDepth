@@ -32,9 +32,6 @@ class Trainer:
         self.opt = options
         self.log_path = os.path.join(self.opt.log_dir, self.opt.model_name)
 
-        assert self.opt.height % 32 == 0, "'height' must be a multiple of 32"
-        assert self.opt.width % 32 == 0, "'width' must be a multiple of 32"
-
         self.models = {}
         self.parameters_to_train = []
         self.device = torch.device("cpu" if self.opt.no_cuda else "cuda")
@@ -70,7 +67,7 @@ class Trainer:
             non_negative=True,
         )
 
-        # use NYU-finetuned weights, note that this model's output is in depth space, so no need to invert again in L252
+        ### use NYU-finetuned weights, note that this model's output is in depth space, so no need to invert again in L252
         # self.mono_model = DPTDepthModel2(
         #     path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
         #     scale=0.000305,
@@ -118,6 +115,7 @@ class Trainer:
                          "UniSIN": datasets.UniSINDataset,}
         self.dataset = datasets_dict[self.opt.dataset]
 
+        # set to 1.0: using default SimSIN. VA's alignment is approximately 2x for depth trained on SimSIN
         if self.opt.dataset == 'SimSIN':
             self.approx_factor = 1.0
         elif self.opt.dataset == 'VA':
@@ -413,7 +411,6 @@ class Trainer:
 
         depth_gt = inputs["depth_gt"]
         mask = torch.logical_and(depth_gt>0.01, depth_gt<=10.0)
-        #mask = depth_gt > 0
 
         depth_gt = depth_gt[mask]
         depth_pred = depth_pred[mask]
@@ -506,7 +503,7 @@ class Trainer:
                 imageio.imwrite(f'{store_path}/{idx:02d}_current.png', img[idx])
                 write_turbo_depth_metric(f'{store_path}/{idx:02d}_depth.png', depth[idx], vmax=10.0)
 
-            del inputs, outputs, losses
+            del inputs, outputs
 
     def eval_save_all(self):
         """
@@ -569,6 +566,7 @@ class Trainer:
         self.a1 = AverageMeter('a1')
         self.a2 = AverageMeter('a2')
         self.a3 = AverageMeter('a3')
+        self.metr = [self.abs_mn, self.abs_rel, self.sq_rel, self.rms, self.log_rms, self.a1, self.a2, self.a3]
         N = self.opt.batch_size
 
         local_count = 0
@@ -597,25 +595,20 @@ class Trainer:
                         self.compute_depth_errors_NYUv2(inputs, outputs, losses)
                     else:
                         raise NotImplementedError("Do evaluation only on VA or NYUv2")
-                    self.abs_mn.update(losses['de/abs_mn'], N)
-                    self.abs_rel.update(losses['de/abs_rel'], N)
-                    self.sq_rel.update(losses['de/sq_rel'], N)
-                    self.rms.update(losses['de/rms'], N)
-                    self.log_rms.update(losses['de/log_rms'], N)
-                    self.a1.update(losses['da/a1'], N)
-                    self.a2.update(losses['da/a2'], N)
-                    self.a3.update(losses['da/a3'], N)
+
+                    for var, name in zip(self.metr, self.depth_metric_names):
+                        var.update(losses[name], N)
 
             local_count += 1
 
-        del inputs, outputs, losses
+        if "depth_gt" in inputs:
+            idfy = self.opt.load_weights_folder
+            f = open(f'evaluation-{idfy}.txt','w')
+            for var in self.metr:
+                f.write(str(var))
+            f.close()
 
-        idfy = self.opt.load_weights_folder
-        f = open(f'evaluation-{idfy}.txt','w')
-        all_errors = [self.abs_mn, self.abs_rel, self.sq_rel, self.rms, self.log_rms, self.a1, self.a2, self.a3]
-        for comp in all_errors:
-            f.write(str(comp))
-        f.close()
+        del inputs, outputs, losses
 
     def compute_depth_errors_VA(self, inputs, outputs, losses):
         """
@@ -626,13 +619,11 @@ class Trainer:
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
-        mask = depth_gt > 0.01
         mask = torch.logical_and(depth_gt > 0.01, depth_gt<=10.0)
 
         depth_gt = depth_gt[mask]
         depth_pred = depth_pred[mask]
         depth_pred *= torch.median(depth_gt) / torch.median(depth_pred)
-
         depth_pred = torch.clamp(depth_pred, min=1e-3, max=10.0)
         depth_errors = compute_depth_errors(depth_gt, depth_pred)
 
@@ -650,7 +641,10 @@ class Trainer:
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
+        mask = torch.logical_and(depth_gt > 0.01, depth_gt<=10.0)
 
+        depth_gt = depth_gt[mask]
+        depth_pred = depth_pred[mask]
         depth_pred *= torch.median(depth_gt) / torch.median(depth_pred)
         depth_pred = torch.clamp(depth_pred, min=1e-3, max=10.0)
         depth_errors = compute_depth_errors(depth_gt, depth_pred)
@@ -764,7 +758,7 @@ class Trainer:
         val_filenames = readlines(fpath.format("UE4_left_freq_5"))
         val_dataset = self.dataset(
             self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
-            frames_to_load, 4, is_train=False)
+            self.opt.frame_ids, 4, is_train=False)
         self.val_loader = DataLoader(
             val_dataset, self.opt.batch_size, False,
             num_workers=8, pin_memory=False, drop_last=True)
@@ -831,6 +825,7 @@ class Trainer:
         self.a1 = AverageMeter('a1')
         self.a2 = AverageMeter('a2')
         self.a3 = AverageMeter('a3')
+        self.metr = [self.abs_mn, self.abs_rel, self.sq_rel, self.rms, self.log_rms, self.a1, self.a2, self.a3]
         N = self.opt.batch_size
 
         #count = 0
@@ -845,23 +840,18 @@ class Trainer:
 
                 if "depth_gt" in inputs:
                     self.self.compute_depth_errors_VA(inputs, outputs, losses)
-                    self.abs_mn.update(losses['de/abs_mn'], N)
-                    self.abs_rel.update(losses['de/abs_rel'], N)
-                    self.sq_rel.update(losses['de/sq_rel'], N)
-                    self.rms.update(losses['de/rms'], N)
-                    self.log_rms.update(losses['de/log_rms'], N)
-                    self.a1.update(losses['da/a1'], N)
-                    self.a2.update(losses['da/a2'], N)
-                    self.a3.update(losses['da/a3'], N)
+                    
+                    for var, name in zip(self.metr, self.depth_metric_names):
+                        var.update(losses[name], N)
+
+        if "depth_gt" in inputs:
+            idfy = self.opt.load_weights_folder
+            f = open(f'evaluation-{idfy}.txt','w')
+            for var in self.metr:
+                f.write(str(var))
+            f.close()
 
         del inputs, outputs, losses
-
-        f = open('test.txt','w')
-        #f = open(f'{self.opt.eval_filename}','w')
-        all_errors = [self.abs_mn, self.abs_rel, self.sq_rel, self.rms, self.log_rms, self.a1, self.a2, self.a3]
-        for comp in all_errors:
-            f.write(str(comp))
-        f.close()
 
     def predict_poses(self, inputs):
         """
@@ -974,12 +964,12 @@ class Trainer:
 
         # multi frame path
         features, _, _ = self.models["encoder"](inputs["color_aug", 0, 0],
-                                                                        lookup_frames,
-                                                                        relative_poses,
-                                                                        inputs[('K', 2)],
-                                                                        inputs[('inv_K', 2)],
-                                                                        min_depth_bin=min_depth_bin,
-                                                                        max_depth_bin=max_depth_bin)
+                            lookup_frames,
+                            relative_poses,
+                            inputs[('K', 2)],
+                            inputs[('inv_K', 2)],
+                            min_depth_bin=min_depth_bin,
+                            max_depth_bin=max_depth_bin)
         outputs.update(self.models["depth"](features))
 
         self.generate_images_pred_multi(inputs, outputs)
