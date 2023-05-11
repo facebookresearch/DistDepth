@@ -62,6 +62,7 @@ if __name__ == "__main__":
             input_image = torch.from_numpy(raw_img).float().to(device)
             input_image = (input_image / 255.0).unsqueeze(0)
 
+            # resize to input size
             input_image = torch.nn.functional.interpolate(
                 input_image, (256, 256), mode="bilinear", align_corners=False
             )
@@ -69,17 +70,17 @@ if __name__ == "__main__":
             outputs = depth_decoder(features)
 
             out = outputs[("out", 0)]
+            # resize to original size
             out_resized = torch.nn.functional.interpolate(
                 out, (512, 512), mode="bilinear", align_corners=False
             )
+            # convert disparity to depth
             depth = output_to_depth(out_resized, 0.1, 10)
             metric_depth = depth.cpu().numpy().squeeze()
 
-            # Please adjust vmax for visualization. 10.0 means 10 meters which is the whole prediction range in converting disparity to depth.
+            # Please adjust vmax for visualization. 10.0 means 10 meters which is the whole prediction range.
             normalizer = mpl.colors.Normalize(vmin=0.1, vmax=10.0)
-            mapper = cm.ScalarMappable(norm=normalizer, cmap="turbo_r")
-            colormapped_im = (mapper.to_rgba(metric_depth)[:, :, :3] * 255).astype(
-                np.uint8
-            )
+            mapper = cm.ScalarMappable(norm=normalizer, cmap="turbo")
+            colormapped_im = (mapper.to_rgba(metric_depth)[:, :, :3] * 255).astype(np.uint8)
 
             cv2.imwrite(os.path.join(output_path, f"{idx:02d}.png"), colormapped_im[:,:,[2,1,0]])
