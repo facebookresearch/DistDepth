@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
             # Please adjust vmax for visualization. 10.0 means 10 meters which is the whole prediction range in converting disparity to depth.
             normalizer = mpl.colors.Normalize(vmin=0.1, vmax=10.0)
-            mapper = cm.ScalarMappable(norm=normalizer, cmap="turbo_r")
+            mapper = cm.ScalarMappable(norm=normalizer, cmap="turbo")
             colormapped_im = (mapper.to_rgba(metric_depth)[:, :, :3] * 255).astype(
                 np.uint8
             )
