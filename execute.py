@@ -23,7 +23,7 @@ if __name__ == "__main__":
         trainer.eval_save()
     elif opts.exe == 'eval_save_all':
         trainer = Trainer(opts)
-        trainer.eval_save()
+        trainer.eval_save_all()
     elif opts.exe == 'eval_measure':
         trainer = Trainer(opts)
         trainer.eval_measure()

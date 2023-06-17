@@ -69,10 +69,10 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 ## <div align=""> Training</div>
 
 For a simple taste of training, download a smaller replica set [<a href="https://drive.google.com/file/d/1g-OXOsKeincRc1-O3x42wVRFKpog2aRe/view?usp=sharing">here</a>] and create and put under './SimSIN-simple'.
-
-   ``` mkdir weights ```
    
 ```shell
+mkdir weights
+
 wget -O weights/dpt_hybrid_nyu-2ce69ec7.pt https://github.com/intel-isl/DPT/releases/download/1_0/dpt_hybrid_nyu-2ce69ec7.pt 
 ```
 
@@ -110,17 +110,22 @@ Download VA (8G) first. Extract under the root folder.
 
 Run   ``` bash eval.sh ```   The performances will be saved under the root folder.
 
-To visualize the predicted depth maps in a minibatch: 
+To visualize the predicted depth maps in a minibatch (adjust batch_size for different numbers): 
+
 
 ```shell
-python execute.py --exe eval_save --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152 ```
+python execute.py --exe eval_save --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 10 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152
 ```
+
+If missing 'weights/dpt_hybrid_nyu-2ce69ec7.pt' message pops up, download the model from [DPT](https://github.com/isl-org/DPT) and put it under 'weights'.
 
 To visualize the predicted depth maps for all testing data on the list: 
 
 ```shell
-python execute.py --exe eval_save_all --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152 ```
+python execute.py --exe eval_save_all --log_dir='./tmp' --data_path VA --dataset VA  --batch_size 1 --load_weights_folder <path to weights> --models_to_load encoder depth  --width 256 --height 256 --max_depth 10 --frame_ids 0 --num_layers 152
 ```
+
+Only batch_size = 1 is valid under this mode.
 
 Evaluation on NYUv2
 

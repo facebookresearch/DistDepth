@@ -59,8 +59,8 @@ class Trainer:
 
         # Download pretrained weights from DPT (https://github.com/isl-org/DPT) and put them under './weights/'  
         self.mono_model = DPTDepthModel(
-            path='./weights/dpt_hybrid-midas-501f0c75.pt',
-            #path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
+            #path='./weights/dpt_hybrid-midas-501f0c75.pt',
+            path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
             #path='./weights/dpt_large-midas-2f21e586.pt',
             backbone="vitb_rn50_384", #DPT-hybrid
             #backbone="vitl16_384", # DPT-Large
@@ -115,24 +115,27 @@ class Trainer:
                          "UniSIN": datasets.UniSINDataset,}
         self.dataset = datasets_dict[self.opt.dataset]
 
+        self.approx_factor = 1.0
         # set to 1.0: using default SimSIN. VA's alignment is approximately 2x for depth trained on SimSIN
-        if self.opt.dataset == 'SimSIN':
-            self.approx_factor = 1.0
-        elif self.opt.dataset == 'VA':
-            self.approx_factor = 2.0
-        else:
-            self.approx_factor = 1.0
+        # if self.opt.dataset == 'SimSIN':
+        #     self.approx_factor = 1.0
+        # elif self.opt.dataset == 'VA':
+        #     self.approx_factor = 2.0
+        # else:
+        #     self.approx_factor = 1.0
 
 
         fpath = os.path.join(self.opt.data_path,  "{}.txt")
 
         # training on VA
-        #train_filenames = readlines(fpath.format("VA_all"))
-        #val_filenames = readlines(fpath.format("VA_left_all"))
-
-        # training on replica
-        train_filenames = readlines(fpath.format("replica_train"))
-        val_filenames = readlines(fpath.format("replica_test_sub"))
+        if self.opt.dataset == 'VA':
+            train_filenames = readlines(fpath.format("VA_all"))
+            val_filenames = readlines(fpath.format("VA_left_all"))
+        elif self.opt.dataset == 'SimSIN': # training on replica
+            train_filenames = readlines(fpath.format("replica_train"))
+            val_filenames = readlines(fpath.format("replica_test_sub"))
+        else:
+            raise NotImplementedError("Please define your training and validation file path")
 
         # define train/val file list for SimSIN or UniSIN in the under. Please download the data in the project page
         #train_filenames = readlines(fpath.format("all_large_release2")) # readlines(fpath.format("UniSIN_500_list"))
@@ -472,10 +475,10 @@ class Trainer:
         """
         self.set_eval()
         try:
-            inputs = self.val_iter.next()
+            inputs = self.val_iter.__next__()
         except StopIteration:
             self.val_iter = iter(self.val_loader)
-            inputs = self.val_iter.next()
+            inputs = self.val_iter.__next__()
 
         with torch.no_grad():
             inputs[("color_aug", 0, 0)] = inputs[("color_aug", 0, 0)].cuda()
@@ -491,17 +494,26 @@ class Trainer:
 
             img = inputs[('color_aug',0, 0)]
             img = F.interpolate(img, sz, mode='bilinear', align_corners=True)
-            img = img.cpu().numpy().squeeze().transpose(0,2,3,1)
 
-            depth = outputs[('depth', 0, 0)] * self.approx_alignment #approximate alignment for visualization
+            img = img.cpu().numpy().squeeze()
+            if img.shape[0] == self.opt.batch_size: # batch_size > 1
+                img = np.transpose(img, (0,2,3,1))
+            else: # batch_size == 1
+                img = np.transpose(img, (1,2,0))
+
+            depth = outputs[('depth', 0, 0)] * self.approx_factor #approximate alignment for visualization
             depth = F.interpolate(depth, sz, mode='bilinear', align_corners=True)
             depth = depth.cpu().numpy().squeeze()
 
             bsz = img.shape[0]
 
-            for idx in range(bsz):
-                imageio.imwrite(f'{store_path}/{idx:02d}_current.png', img[idx])
-                write_turbo_depth_metric(f'{store_path}/{idx:02d}_depth.png', depth[idx], vmax=10.0)
+            if bsz != self.opt.batch_size: # save only one image
+                imageio.imwrite(f'{store_path}/00_current.png', img)
+                write_turbo_depth_metric(f'{store_path}/00_depth.png', depth, vmax=10.0)
+            else: # forloop to save images
+                for idx in range(bsz):
+                    imageio.imwrite(f'{store_path}/{idx:02d}_current.png', img[idx])
+                    write_turbo_depth_metric(f'{store_path}/{idx:02d}_depth.png', depth[idx], vmax=10.0)
 
             del inputs, outputs
 
@@ -513,7 +525,7 @@ class Trainer:
         self.count = 0
         while True:
             try:
-                inputs = self.val_iter.next()
+                inputs = self.val_iter.__next__()
             except StopIteration:
                 break
 
@@ -527,29 +539,32 @@ class Trainer:
                 store_path = f'results_all/'
                 if not os.path.exists(store_path):
                     os.makedirs(store_path)
+                    os.makedirs(store_path+'/image')
                     os.makedirs(store_path+'/depth')
 
                 img = inputs[('color',0, 0)]
                 img = F.interpolate(img, sz, mode='bilinear', align_corners=True)
-                img = img.cpu().numpy().squeeze().transpose(0,2,3,1)
+                img = img.cpu().numpy().squeeze()
+
+                if img.ndim == 3:
+                    img = np.transpose(img, (1,2,0))
+                else:
+                    raise ValueError('Eval_save_all only supports batch_size = 1')
 
                 if 'depth_gt' in inputs:
                     depth_gt = inputs['depth_gt']
                     depth_gt = F.interpolate(depth_gt, sz, mode='bilinear', align_corners=True)
                     depth_gt = depth_gt.cpu().numpy().squeeze()
-                    mask = depth_gt > 0 
 
-                depth = outputs[('depth', 0, 0)] * self.approx_alignment #approximate alignment for visualization
+                depth = outputs[('depth', 0, 0)] * self.approx_factor #approximate alignment for visualization
                 depth = F.interpolate(depth, sz, mode='bilinear', align_corners=True)
                 depth = depth.cpu().numpy().squeeze()
 
-                batch_size = img.shape[0]
-                for idx in range(batch_size):
-                    imageio.imwrite(f'{store_path}/{self.count:04d}_img.png', img[idx])
-                    write_turbo_depth_metric(f'{store_path}/depth/{self.count:04d}_depth.png', depth, vmax=10.0)
-                    self.count += 1
-                    if 'depth_gt' in inputs:
-                        write_turbo_depth_metric(f'{store_path}/depth/{self.count:04}_depth_gt.png', depth_gt, vmax=10.0)
+                self.count += 1
+                imageio.imwrite(f'{store_path}/image/{self.count:04d}_img.png', img)
+                write_turbo_depth_metric(f'{store_path}/depth/{self.count:04d}_depth.png', depth, vmax=10.0)
+                if 'depth_gt' in inputs:
+                    write_turbo_depth_metric(f'{store_path}/depth/{self.count:04}_depth_gt.png', depth_gt, vmax=10.0)
 
             del inputs, outputs
 
