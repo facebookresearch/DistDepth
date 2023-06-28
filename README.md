@@ -80,6 +80,7 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 For a simple taste of training, download a smaller replica set [<a href="https://drive.google.com/file/d/1g-OXOsKeincRc1-O3x42wVRFKpog2aRe/view?usp=sharing">here</a>] and create and put under './SimSIN-simple'.
 
 The folder structure should be
+
       .
       ├── SimSIN-simple
             ├── replica
