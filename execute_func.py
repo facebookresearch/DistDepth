@@ -272,10 +272,10 @@ class Trainer:
         """
         self.set_eval()
         try:
-            inputs = self.val_iter.next()
+            inputs = self.val_iter.__next__()
         except StopIteration:
             self.val_iter = iter(self.val_loader)
-            inputs = self.val_iter.next()
+            inputs = self.val_iter.__next__()
 
         with torch.no_grad():
             outputs, losses = self.process_batch(inputs)
@@ -378,9 +378,8 @@ class Trainer:
         loss_depth_criterion = 0.001 * self.depth_criterion(mask_pred, mask_target)
         losses["loss/pseudo_depth"] = self.compute_ssim_loss(outputs["fromMono_dep"], outputs[('depth', 0, 0)]).mean() + loss_depth_criterion
         losses["loss"] += self.opt.dist_wt * losses["loss/pseudo_depth"]
-        print(self.cnt)
-        self.cnt += 1
-        print(losses["loss"])
+        #self.cnt += 1
+        #print(f'Iter {self.cnt}: {losses["loss"]}')
 
         return losses
     

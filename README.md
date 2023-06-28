@@ -7,6 +7,7 @@
 
 ## <div align="">Updates</div>
 
+[June 2023]: Fix bugs in sample training code.
 [June 2023]: Fix bugs in visualization and saving.
 
 ## <div align="">Introduction</div>
@@ -63,7 +64,7 @@ Some Sample data are provided in `data/sample_pc`.
 
    ``` python visualize_pc.py ```
 
-This will generate pointcloud in '.ply' format by image and depth map inputs. Use meshlab to visualize the pointcloud.
+This will generate pointcloud in '.ply' format by image and depth map inputs for 'data/sample_pc/0000.jpg'. ply file is saved under 'data/sample_pc' folder. Use meshlab to visualize the pointcloud.
 
 ## <div align=""> Data</div>
 
@@ -76,6 +77,11 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 ## <div align=""> Training</div>
 
 For a simple taste of training, download a smaller replica set [<a href="https://drive.google.com/file/d/1g-OXOsKeincRc1-O3x42wVRFKpog2aRe/view?usp=sharing">here</a>] and create and put under './SimSIN-simple'.
+
+      .
+      ├── SimSIN-simple
+            ├── replica
+            ├── replica_train.txt
    
 ```shell
 mkdir weights
@@ -84,7 +90,7 @@ wget -O weights/dpt_hybrid_nyu-2ce69ec7.pt https://github.com/intel-isl/DPT/rele
 ```
 
 ```shell
-python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --use_stereo  --thre 0.95 --num_layers 152 
+python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --use_stereo  --thre 0.95 --num_layers 152 --log_frequency 25
 ```
 
 The memory takes about 18G and requires about 20 min on a RTX 3090 GPU.
