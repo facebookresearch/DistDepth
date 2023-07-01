@@ -7,6 +7,8 @@
 
 ## <div align="">Updates</div>
 
+**[June 2023]: Revise the instruction for training codes and train on your own dataset.**
+
 [June 2023]: Fix bugs in sample training code.
 
 [June 2023]: Fix bugs in visualization and saving.
@@ -75,7 +77,7 @@ To generate stereo data with depth using Habitat, we provide a snippet here. Ins
 
    ``` python visualize_pc.py ```
 
-## <div align=""> Training</div>
+## <div align=""> Training with PoseNet and DepthNet</div>
 
 For a simple taste of training, download a smaller replica set [<a href="https://drive.google.com/file/d/1g-OXOsKeincRc1-O3x42wVRFKpog2aRe/view?usp=sharing">here</a>] and create and put under './SimSIN-simple'.
 
@@ -96,11 +98,38 @@ wget -O weights/dpt_hybrid_nyu-2ce69ec7.pt https://github.com/intel-isl/DPT/rele
 
 Training command
 
+The below command trains networks by using stereo and current frame (PoseNet is not used)
+
 ```shell
 python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --use_stereo  --thre 0.95 --num_layers 152 --log_frequency 25
 ```
 
-The memory takes about 18G and requires about 20 min on a RTX 3090 GPU.
+The below command trains networks by using current and past/future one frame
+
+```shell
+python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 -1 1 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --thre 0.95 --num_layers 152 --log_frequency 25
+```
+
+The below command trains networks by using current and past/future one frame and stereo
+
+```shell
+python execute.py --exe train --model_name distdepth-distilled --frame_ids 0 -1 1 --log_dir='./tmp' --data_path SimSIN-simple --dataset SimSIN  --batch_size 12 --width 256 --height 256 --max_depth 10.0  --num_epochs 10 --scheduler_step_size 8 --learning_rate 0.0001 --thre 0.95 --num_layers 152 --log_frequency 25 --use_stereo
+```
+
+The memory requires about 20 min on a RTX 3090 GPU.
+
+Changing different expert network: See execute_func.py L59. Switch to different version of DPTDepthModel. The default now used DPT finetuned on NYUv2
+
+If you would like to use more frames, you'll need to leave more buffer frames in the data list file. See below notes for details.
+
+
+**Notes for training on your own dataset:**
+
+1. Create your dataloader. You can find SimSIN sample (containing both temporal and stereo) under dataset/ , and then add your dataloader in execute_func.py L111.
+
+2. In execute_func.py L130-141, add your data list file. See format in Replica sample data. Specifically each line contains <file_path> <space> <temporal_step> <step> <left_or_right_for_stereo>
+
+3. Use the before commands to train on your data. Note that your data need to have stereo if you specify --use_stereo. If you sepcify frame_id -1, 1, you'll need to leave one buffer frame at the top and end to avoid reading from None. For example, replica sample data contain 0-49 time steps, but in the data list file, only 1-48 are in file  
 
 ## <div align=""> Evaluation</div>
 

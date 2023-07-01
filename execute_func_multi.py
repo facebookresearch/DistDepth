@@ -129,7 +129,7 @@ class Trainer_multi:
         #count = 0
         while True:
             try:
-                inputs = self.val_iter.next()
+                inputs = self.val_iter.__next__()
             except StopIteration:
                 break
 
@@ -149,7 +149,7 @@ class Trainer_multi:
 
         del inputs, outputs, losses
 
-        f = open('distdepth-M.txt','w')
+        f = open('evaluation-ckpts-distdepth-101-SimSIN-DPTLegacy-Multi.txt','w')
         all_errors = [self.abs_mn, self.abs_rel, self.sq_rel, self.rms, self.log_rms, self.a1, self.a2, self.a3]
         for comp in all_errors:
             f.write(str(comp))

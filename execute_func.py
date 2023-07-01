@@ -41,8 +41,7 @@ class Trainer:
 
         assert self.opt.frame_ids[0] == 0, "frame_ids must start with 0"
 
-        self.use_pose_net = False
-        #self.use_pose_net = not (self.opt.use_stereo and self.opt.frame_ids == [0])
+        self.use_pose_net = not (self.opt.use_stereo and self.opt.frame_ids == [0])
 
         if self.opt.use_stereo:
             self.opt.frame_ids.append("s")
@@ -79,9 +78,10 @@ class Trainer:
         self.mono_model.requires_grad=False
         self.mono_model.to(self.device)
 
+        # By default, we use a standalone ResNet50 as PoseNet. 
         if self.use_pose_net:
             self.models["pose_encoder"] = networks.ResnetEncoder(
-                50,
+                50, # revise this number if you use a different ResNet backbone
                 self.opt.weights_init == "pretrained",
                 num_input_images=self.num_pose_frames)
 
@@ -127,19 +127,18 @@ class Trainer:
 
         fpath = os.path.join(self.opt.data_path,  "{}.txt")
 
-        # training on VA
+        # The below is sample code for training on VA and Replica
         if self.opt.dataset == 'VA':
             train_filenames = readlines(fpath.format("VA_all"))
             val_filenames = readlines(fpath.format("VA_left_all"))
-        elif self.opt.dataset == 'SimSIN': # training on replica
+        elif self.opt.dataset == 'SimSIN':
             train_filenames = readlines(fpath.format("replica_train"))
             val_filenames = readlines(fpath.format("replica_test_sub"))
         else:
             raise NotImplementedError("Please define your training and validation file path")
-
-        # define train/val file list for SimSIN or UniSIN in the under. Please download the data in the project page
-        #train_filenames = readlines(fpath.format("all_large_release2")) # readlines(fpath.format("UniSIN_500_list"))
-        #val_filenames = readlines(fpath.format("replica_test_sub")
+        # define train/val file list for SimSIN or UniSIN in the under. DOWNLOAD the data in the project page
+        # train_filenames = readlines(fpath.format("all_large_release2")) # readlines(fpath.format("UniSIN_500_list"))
+        # val_filenames = readlines(fpath.format("replica_test_sub")
 
         num_train_samples = len(train_filenames)
         self.num_total_steps = num_train_samples // self.opt.batch_size * self.opt.num_epochs
@@ -255,7 +254,7 @@ class Trainer:
         #outputs["fromMono_dep"] = outputs["fromMono"] #600.0 * (1/(outputs["fromMono"]+1e-6)) ##The output range of fromMono is large 250-2500
 
         if self.use_pose_net:
-            outputs.update(self.predict_poses(inputs, features))
+            outputs.update(self.predict_poses(inputs))
 
         self.generate_images_pred(inputs, outputs)
 
@@ -587,13 +586,13 @@ class Trainer:
         losses = {}
         while True:
             try:
-                inputs = self.val_iter.next()
+                inputs = self.val_iter.__next__()
             except StopIteration:
                 if not local_count == 0:
                     break
                 else:
                     self.val_iter = iter(self.val_loader)
-                    inputs = self.val_iter.next()
+                    inputs = self.val_iter.__next__()
 
             with torch.no_grad():
                 inputs[("color_aug", 0, 0)] = inputs[("color_aug", 0, 0)].cuda()
@@ -645,6 +644,47 @@ class Trainer:
             losses = {}
         for i, metric in enumerate(self.depth_metric_names):
             losses[metric] = np.array(depth_errors[i].cpu())
+
+    def predict_poses(self, inputs):
+        """Predict poses between input frames for monocular sequences.
+        """
+        outputs = {}
+        if self.num_pose_frames == 2:
+            pose_feats = {f_i: inputs["color_aug", f_i, 0] for f_i in self.opt.frame_ids}
+            for f_i in self.opt.frame_ids[1:]:
+                if f_i != "s":
+                    # To maintain ordering we always pass frames in temporal order
+                    if f_i < 0:
+                        pose_inputs = [pose_feats[f_i], pose_feats[0]]
+                    else:
+                        pose_inputs = [pose_feats[0], pose_feats[f_i]]
+
+                    pose_inputs = [self.models["pose_encoder"](torch.cat(pose_inputs, 1))]
+
+                    axisangle, translation = self.models["pose"](pose_inputs)
+                    outputs[("axisangle", 0, f_i)] = axisangle
+                    outputs[("translation", 0, f_i)] = translation
+
+                    # Invert the matrix if the frame id is negative
+                    outputs[("cam_T_cam", 0, f_i)] = transformation_from_parameters(
+                        axisangle[:, 0], translation[:, 0], invert=(f_i < 0))
+
+        else:
+            # Here we input all frames to the pose net (and predict all poses) together
+            
+            pose_inputs = torch.cat([inputs[("color_aug", i, 0)] for i in self.opt.frame_ids if i != "s"], 1)
+            pose_inputs = [self.models["pose_encoder"](pose_inputs)]
+
+            axisangle, translation = self.models["pose"](pose_inputs)
+
+            for i, f_i in enumerate(self.opt.frame_ids[1:]):
+                if f_i != "s":
+                    outputs[("axisangle", 0, f_i)] = axisangle
+                    outputs[("translation", 0, f_i)] = translation
+                    outputs[("cam_T_cam", 0, f_i)] = transformation_from_parameters(
+                        axisangle[:, i], translation[:, i])
+
+        return outputs
 
     def compute_depth_errors_NYUv2(self, inputs, outputs, losses):
         """
@@ -845,7 +885,7 @@ class Trainer:
         #count = 0
         while True:
             try:
-                inputs = self.val_iter.next()
+                inputs = self.val_iter.__next__()
             except StopIteration:
                 break
 
@@ -867,11 +907,12 @@ class Trainer:
 
         del inputs, outputs, losses
 
-    def predict_poses(self, inputs):
+    def predict_poses_multi(self, inputs):
         """
         Predict poses between input frames for monocular sequences.
         """
         outputs = {}
+
         if self.num_pose_frames == 2:
             # In this setting, we compute the pose to each source frame via a
             # separate forward pass through the pose network.
@@ -946,7 +987,7 @@ class Trainer:
         outputs = {}
 
         with torch.no_grad():
-            pose_pred = self.predict_poses(inputs, None)
+            pose_pred = self.predict_poses(inputs)
         outputs.update(pose_pred)
         mono_outputs.update(pose_pred)
 
