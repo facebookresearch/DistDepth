@@ -70,6 +70,9 @@ if __name__ == "__main__":
             outputs = depth_decoder(features)
 
             out = outputs[("out", 0)]
+            # print(out.min())
+            # print(out.max())
+            # exit()
             # resize to original size
             out_resized = torch.nn.functional.interpolate(
                 out, (512, 512), mode="bilinear", align_corners=False

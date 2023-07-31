@@ -58,11 +58,11 @@ class Trainer:
 
         # Download pretrained weights from DPT (https://github.com/isl-org/DPT) and put them under './weights/'  
         self.mono_model = DPTDepthModel(
-            #path='./weights/dpt_hybrid-midas-501f0c75.pt',
-            path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',
-            #path='./weights/dpt_large-midas-2f21e586.pt',
-            backbone="vitb_rn50_384", #DPT-hybrid
-            #backbone="vitl16_384", # DPT-Large
+            #path='./weights/dpt_hybrid-midas-501f0c75.pt', # general purpose
+            path='./weights/dpt_hybrid_nyu-2ce69ec7.pt',  # indoor
+            #path='./weights/dpt_large-midas-2f21e586.pt', # general purpose
+            backbone="vitb_rn50_384", #DPT-hybrid (default)
+            #backbone="vitl16_384", # DPT-Large (use with dpt-large)
             non_negative=True,
         )
 
@@ -115,14 +115,14 @@ class Trainer:
                          "UniSIN": datasets.UniSINDataset,}
         self.dataset = datasets_dict[self.opt.dataset]
 
-        self.approx_factor = 1.0
+        #self.approx_factor = 1.0
         # set to 1.0: using default SimSIN. VA's alignment is approximately 2x for depth trained on SimSIN
-        # if self.opt.dataset == 'SimSIN':
-        #     self.approx_factor = 1.0
-        # elif self.opt.dataset == 'VA':
-        #     self.approx_factor = 2.0
-        # else:
-        #     self.approx_factor = 1.0
+        if self.opt.dataset == 'SimSIN':
+            self.approx_factor = 1.0
+        elif self.opt.dataset == 'VA':
+            self.approx_factor = 2.0
+        else:
+            self.approx_factor = 1.0
 
 
         fpath = os.path.join(self.opt.data_path,  "{}.txt")
@@ -247,12 +247,15 @@ class Trainer:
         features = self.models["encoder"](inputs[("color_aug", 0, 0)])
         outputs = self.models["depth"](features)
 
-        # monocular depth cues. Note that it needs to normalize from [0,1] to [-1,-1] for DPT. Also larger denominator needs to be used.
-        # comment this out at test time to speed up
-        outputs["fromMono"], feature_dpt = self.mono_model((inputs[("color_aug", 0, 0)]-0.5)/0.5 ) 
-        outputs["fromMono_dep"] = (1/(outputs["fromMono"]+1e-6)) ##The output range of fromMono is large 250-2500
-        #outputs["fromMono_dep"] = outputs["fromMono"] #600.0 * (1/(outputs["fromMono"]+1e-6)) ##The output range of fromMono is large 250-2500
+        # Monocular depth cues. It needs to normalize from [0,1] to [-1,-1] to accomodate DPT input.
+        # [Optional] You can comment out all outputs["fromMono_disparity"] at test time to speed up
+        # The output range of outputs["fromMono_disparity"] is large, approx 0-2000
+        outputs["fromMono_disparity"], feature_dpt = self.mono_model((inputs[("color_aug", 0, 0)]-0.5)/0.5)  
 
+        # 600 is a stablization term for SSIM loss calculation (statistical distillation loss)
+        # Outputs["fromMono"] is in disparity space. +1.0 is to avoid divide by zero.
+        outputs["fromMono_depth"] = (600.0/(outputs["fromMono_disparity"]+1.0)) 
+        
         if self.use_pose_net:
             outputs.update(self.predict_poses(inputs))
 
@@ -348,9 +351,10 @@ class Trainer:
 
         losses["loss"] = stereo_loss
 
-        # median alignment for ease of use
-        fac = (torch.median(outputs[('depth', 0, 0)]) / torch.median(outputs["fromMono_dep"])).detach()
-        target_depth = outputs["fromMono_dep"]*fac
+        # median alignment from fromMono_depth to out depth
+        # ease to use distillation
+        fac = (torch.median(outputs[('depth', 0, 0)]) / torch.median(outputs["fromMono_depth"])).detach()
+        target_depth = outputs["fromMono_depth"]*fac
 
         # spatial gradient
         edge_target = kornia.filters.spatial_gradient(target_depth)
@@ -374,9 +378,12 @@ class Trainer:
         # soft sign for differentiable
         mask_pred = self.SOFT(edge_pred - bar_pred)[pos]
 
-        loss_depth_criterion = 0.001 * self.depth_criterion(mask_pred, mask_target)
-        losses["loss/pseudo_depth"] = self.compute_ssim_loss(outputs["fromMono_dep"], outputs[('depth', 0, 0)]).mean() + loss_depth_criterion
+        loss_spatial_dist = 0.001 * self.depth_criterion(mask_pred, mask_target)
+        loss_stat_dist = self.compute_ssim_loss(outputs["fromMono_depth"], outputs[('depth', 0, 0)]).mean()
+
+        losses["loss/pseudo_depth"] = loss_stat_dist + loss_spatial_dist
         losses["loss"] += self.opt.dist_wt * losses["loss/pseudo_depth"]
+        
         #self.cnt += 1
         #print(f'Iter {self.cnt}: {losses["loss"]}')
 
