@@ -5,7 +5,12 @@
 
 [<a href="https://arxiv.org/abs/2112.02306">arXiv</a>] [<a href="https://openaccess.thecvf.com/content/CVPR2022/html/Wu_Toward_Practical_Monocular_Indoor_Depth_Estimation_CVPR_2022_paper.html">CVF open access</a>] [<a href="https://distdepth.github.io/">project site: data, supplementary</a>]
 
+    
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/toward-practical-self-supervised-monocular/monocular-depth-estimation-on-nyu-depth-v2-4)](https://paperswithcode.com/sota/monocular-depth-estimation-on-nyu-depth-v2-4?p=toward-practical-self-supervised-monocular)
+
 ## <div align="">Updates</div>
+
+**[Augest 2023]: Add a snippet for simple AR effects using z-buffer. See the last section**
 
 **[June 2023]: Revise the instruction for training codes and train on your own dataset.**
 
@@ -203,6 +208,14 @@ python execute.py --exe eval_measure --log_dir='./tmp' --data_path NYUv2 --datas
 ```
 
 ## <div align="">Depth-aware AR effects</div>
+
+To reproduce the object dragging with depth map, we provide some data under AR_effects/ and a snippet 'AR_simple.py'
+
+```shell
+python AR_simple.py
+```
+
+It will generate inserted images along a preset trajectory. Use ffmpeg or other video command to compile the images to video.
 
 Virtual object insertion:
 
