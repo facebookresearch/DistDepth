@@ -749,7 +749,7 @@ class Trainer:
 
                 writer.add_image(
                     "out_{}/{}".format(s, j),
-                    normalize_image(outputs[("out", s)][j]), self.step)
+                    normalize_image(outputs[("inverse_depth_output", s)][j]), self.step)
 
                 # automasking
                 writer.add_image(
