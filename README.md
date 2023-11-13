@@ -66,6 +66,8 @@ Download pretrained models
 
 7. Results will be stored under `results/`
 
+Note that during inference, we will apply a 1.312 scale for models trained on SimSIN, since SimSIN is created with stereo baseline of 13.12cm, and during training it uses a stereo scale of 10cm. (See [Issue 27](https://github.com/facebookresearch/DistDepth/issues/27#issue-1989386374))
+
 ## <div align="">Pointcloud Generation</div>
 
 Some Sample data are provided in `data/sample_pc`.
