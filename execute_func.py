@@ -362,10 +362,11 @@ class Trainer:
 
         # convert to magnitude map
         edge_target =  torch.sqrt(edge_target[:,:,0,:,:]**2 + edge_target[:,:,1,:,:]**2 + 1e-6)
+        edge_target = F.normalize(edge_target.view(edge_target.size(0), -1), dim=1, p=2).view(edge_target.size())
         edge_target = edge_target[:,:,5:-5,5:-5]
         # thresholding
-        bar_target = torch.quantile(edge_target, self.opt.thre)
-        pos = edge_target > bar_target
+        bar_target = torch.quantile(edge_target.view(edge_target.size(0), -1), self.opt.thre, dim=1)
+        pos = edge_target > bar_target[:, None, None, None]
         mask_target = self.ABSSIGN(edge_target - bar_target)[pos]
         mask_target = mask_target.detach()
 
