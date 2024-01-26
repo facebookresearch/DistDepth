@@ -364,7 +364,7 @@ class Trainer:
         edge_target =  torch.sqrt(edge_target[:,:,0,:,:]**2 + edge_target[:,:,1,:,:]**2 + 1e-6)
         edge_target = F.normalize(edge_target.view(edge_target.size(0), -1), dim=1, p=2).view(edge_target.size())
         edge_target = edge_target[:,:,5:-5,5:-5]
-        print("b",edge_target.shape)
+        
         # thresholding
         bar_target = torch.quantile(edge_target.reshape(edge_target.size(0), -1), self.opt.thre, dim=1)
         bar_target = bar_target[:, None, None, None]
