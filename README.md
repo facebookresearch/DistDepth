@@ -10,7 +10,9 @@
 
 ## <div align="">Updates</div>
 
-**[Augest 2023]: Add a snippet for simple AR effects using z-buffer. See the last section**
+[Jan 2024]: Add the online least square alignemnt for expert and student's scale and fix bugs for per-sample edge map calculation.
+
+[Augest 2023]: Add a snippet for simple AR effects using z-buffer. See the last section
 
 **[June 2023]: Revise the instruction for training codes and train on your own dataset.**
 

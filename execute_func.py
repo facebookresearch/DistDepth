@@ -189,6 +189,7 @@ class Trainer:
 
         self.save_opts()
         self.cnt = -1
+        self.ones = torch.ones(self.opt.batch_size,1,256,256,1).cuda()
 
     def train(self):
         """Run the entire training pipeline
@@ -254,7 +255,7 @@ class Trainer:
 
         # 600 is a stablization term for SSIM loss calculation (statistical distillation loss)
         # Outputs["fromMono"] is in disparity space. +1.0 is to avoid divide by zero.
-        outputs["fromMono_depth"] = (600.0/(outputs["fromMono_disparity"]+1.0)) 
+        outputs["fromMono_depth"] = 1/(outputs["fromMono_disparity"]+1.0) 
         
         if self.use_pose_net:
             outputs.update(self.predict_poses(inputs))
@@ -351,10 +352,21 @@ class Trainer:
 
         losses["loss"] = stereo_loss
 
+        # Deprecated!
         # median alignment from fromMono_depth to out depth
         # ease to use distillation
-        fac = (torch.median(outputs[('depth', 0, 0)]) / torch.median(outputs["fromMono_depth"])).detach()
-        target_depth = outputs["fromMono_depth"]*fac
+        # outputs["fromMono_depth"] = (600.0/(outputs["fromMono_disparity"]+1.0)) 
+        # fac = (torch.median(outputs[('depth', 0, 0)]) / torch.median(outputs["fromMono_depth"])).detach()
+        # target_depth = outputs["fromMono_depth"]*fac
+
+        # linear alignment from fromMono_depth to out depth
+        # solve least square for alignment
+        A = torch.cat((outputs["fromMono_depth"][:,:,:,:,None], self.ones), dim=4)
+        B = torch.cat((outputs[('depth', 0, 0)][:,:,:,:,None], self.ones), dim=4)
+        X = torch.linalg.lstsq(A, B).solution
+        a_s = torch.nanmean(X[:,:,:,0,0]).detach()
+        a_t = torch.nanmean(X[:,:,:,1,0]).detach()
+        target_depth = outputs["fromMono_depth"]* a_s + a_t
 
         # spatial gradient
         edge_target = kornia.filters.spatial_gradient(target_depth)
@@ -382,7 +394,7 @@ class Trainer:
         mask_pred = self.SOFT(edge_pred - bar_pred)[pos]
 
         loss_spatial_dist = 0.001 * self.depth_criterion(mask_pred, mask_target)
-        loss_stat_dist = self.compute_ssim_loss(outputs["fromMono_depth"], outputs[('depth', 0, 0)]).mean()
+        loss_stat_dist = self.compute_ssim_loss(target_depth, outputs[('depth', 0, 0)]).mean()
 
         losses["loss/pseudo_depth"] = loss_stat_dist + loss_spatial_dist
         losses["loss"] += self.opt.dist_wt * losses["loss/pseudo_depth"]

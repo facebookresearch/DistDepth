@@ -4,10 +4,18 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import torch
 import cv2
 import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
+
+def nanmean(v, *args, inplace=False, **kwargs):
+    if not inplace:
+        v = v.clone()
+    is_nan = torch.isnan(v)
+    v[is_nan] = 0
+    return v.sum(*args, **kwargs) / (~is_nan).float().sum(*args, **kwargs)
 
 class AverageMeter(object):
     def __init__(self, name, fmt=':f'):
