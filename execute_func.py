@@ -251,7 +251,7 @@ class Trainer:
         # Monocular depth cues. It needs to normalize from [0,1] to [-1,-1] to accomodate DPT input.
         # [Optional] You can comment out all outputs["fromMono_disparity"] at test time to speed up
         # The output range of outputs["fromMono_disparity"] is large, approx 0-2000
-        outputs["fromMono_disparity"], feature_dpt = self.mono_model((inputs[("color_aug", 0, 0)]-0.5)/0.5)  
+        outputs["fromMono_disparity"], feature_dpt = self.mono_model(inputs[("color_aug", 0, 0)])
 
         # 600 is a stablization term for SSIM loss calculation (statistical distillation loss)
         # Outputs["fromMono"] is in disparity space. +1.0 is to avoid divide by zero.
