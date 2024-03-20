@@ -318,13 +318,27 @@ def resnet_multiimage_input(num_layers, pretrained=False, num_input_images=1):
     model = ResNetMultiImageInput(block_type, blocks, num_input_images=num_input_images)
 
     if pretrained:
-        loaded = model_zoo.load_url(
-            models.resnet.model_urls["resnet{}".format(num_layers)]
+        c_mapping = {
+            18: models.resnet18,
+            34: models.resnet34,
+            50: models.resnet50,
+            101: models.resnet101,
+            152: models.resnet152,
+        }
+        w_mapping = {
+            18: models.ResNet18_Weights,
+            34: models.ResNet34_Weights,
+            50: models.ResNet50_Weights,
+            101: models.ResNet101_Weights,
+            152: models.ResNet152_Weights
+        }
+
+        loaded = c_mapping[num_layers](weights = w_mapping[num_layers].DEFAULT)
+        state_dict = loaded.state_dict()
+        state_dict["conv1.weight"] = (
+            torch.cat([state_dict["conv1.weight"]] * num_input_images, 1) / num_input_images
         )
-        loaded["conv1.weight"] = (
-            torch.cat([loaded["conv1.weight"]] * num_input_images, 1) / num_input_images
-        )
-        model.load_state_dict(loaded)
+        model.load_state_dict(state_dict)
     return model
 
 

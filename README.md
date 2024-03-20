@@ -9,6 +9,7 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/toward-practical-self-supervised-monocular/monocular-depth-estimation-on-nyu-depth-v2-4)](https://paperswithcode.com/sota/monocular-depth-estimation-on-nyu-depth-v2-4?p=toward-practical-self-supervised-monocular)
 
 ## <div align="">Updates</div>
+[Mar 2024]: Fix bugs for instability for coverting scale and shift 
 
 [Jan 2024]: Add the online least square alignemnt for expert and student's scale and fix bugs for per-sample edge map calculation.
 
@@ -50,7 +51,7 @@ Install packages
     ``` conda create --name distdepth python=3.8 ```
     ``` conda activate distdepth ```
 
-2. Install pre-requisite common packages. Go to https://pytorch.org/get-started/locally/ and install pytorch that is compatible to your computer. We test on pytorch v1.9.0 and cudatoolkit-11.1. (The codes should work under other v1.0+ versions)
+2. Install pre-requisite common packages. Go to https://pytorch.org/get-started/locally/ and install pytorch that is compatible to your computer. We update the code to be compatible with pytorch 2.0+ (tested on torch v2.2.1, torchvision 0.17, cudatoolkit-12). The current code requires torchvision > 0.13
 
 3. Install other dependencies: opencv-python and matplotlib, imageio, Pillow, augly, tensorboardX
 

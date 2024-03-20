@@ -393,7 +393,7 @@ class Trainer:
         # soft sign for differentiable
         mask_pred = self.SOFT(edge_pred - bar_pred)[pos]
 
-        loss_spatial_dist = 0.001 * self.depth_criterion(mask_pred, mask_target)
+        loss_spatial_dist = 0.1 * self.depth_criterion(mask_pred, mask_target)
         loss_stat_dist = self.compute_ssim_loss(target_depth, outputs[('depth', 0, 0)]).mean()
 
         losses["loss/pseudo_depth"] = loss_stat_dist + loss_spatial_dist

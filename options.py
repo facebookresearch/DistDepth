@@ -82,7 +82,7 @@ class DistDepthOptions:
         self.parser.add_argument("--dist_wt",
                                  type=float,
                                  help="distillation loss weight",
-                                 default=1.0)
+                                 default=0.05)
         self.parser.add_argument("--frame_ids",
                                  nargs="+",
                                  type=int,
