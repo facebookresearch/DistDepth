@@ -10,8 +10,8 @@ from PIL import Image
 
 # # SimSIN camera parameters
 # focalLength = 256
-# centerX = 512.0
-# centerY = 512.0
+# centerX = 256.0
+# centerY = 256.0
 # baseline = 0.131202
 # intWidth = 512
 # intHeight = 512
